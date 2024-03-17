@@ -108,7 +108,7 @@ export class DsAssignment1Stack extends cdk.Stack {
       }
     )
 
-    const newReviewFn = new lambdanode.NodejsFunction(this, "AddMovieFn", {
+    const newReviewFn = new lambdanode.NodejsFunction(this, "AddReviewFn", {
       architecture: lambda.Architecture.ARM_64,
       runtime: lambda.Runtime.NODEJS_16_X,
       entry: `${__dirname}/../lambda/addReview.ts`,
@@ -124,6 +124,18 @@ export class DsAssignment1Stack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       runtime: lambda.Runtime.NODEJS_16_X,
       entry: `${__dirname}/../lambda/getMovieReviewsByAuthor.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: reviewsTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
+    const updateReviewFn = new lambdanode.NodejsFunction(this, "UpdateReviewFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+      entry: `${__dirname}/../lambda/updateMovieReview.ts`,
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
       environment: {
@@ -160,6 +172,7 @@ export class DsAssignment1Stack extends cdk.Stack {
     reviewsTable.grantReadData(getMovieReviewsFn)
     reviewsTable.grantReadWriteData(newReviewFn)
     reviewsTable.grantReadData(getMovieReviewsByAuthorFn)
+    reviewsTable.grantReadWriteData(updateReviewFn)
 
     const api = new apig.RestApi(this, "RestAPI", {
       description: "Assignment 1 API",
@@ -199,6 +212,14 @@ export class DsAssignment1Stack extends cdk.Stack {
     movieReviewsByAuthorEndpoint.addMethod(
       "GET",
       new apig.LambdaIntegration(getMovieReviewsByAuthorFn, { proxy: true })
+    )
+    movieReviewsByAuthorEndpoint.addMethod(
+      "PUT",
+      new apig.LambdaIntegration(updateReviewFn, { proxy: true }),
+      {
+        authorizer: requestAuthorizer,
+        authorizationType: apig.AuthorizationType.CUSTOM,
+      }
     )
 
   }
