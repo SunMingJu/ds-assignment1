@@ -10,38 +10,62 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         const parameters = event?.pathParameters;
         console.log("Paramters:", parameters)
         const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
-        const reviewerName = parameters?.reviewerName ? parameters.reviewerName : undefined;
+        const inputParam = parameters?.reviewerName ? parameters.reviewerName : undefined;
+        let isYear = false
+        const yearRegex = new RegExp(/^\d{4}$/)
 
-
-        if (!movieId || !reviewerName){
+        if (!movieId || !inputParam){
             return {
                 statusCode: 404,
                 headers: {
                     "content-type": "application/json",
                   },
-                  body: JSON.stringify({ Message: "Missing movie Id or reviewer name" }),
+                  body: JSON.stringify({ Message: "Missing movie Id" }),
             };
         }
 
-        const commandOutput = await ddbDocClient.send(
-            new QueryCommand({          
+        if (yearRegex.test(inputParam)){
+            isYear = true
+        }
+
+        let commandInput: QueryCommandInput={
+            TableName: process.env.TABLE_NAME,
+        }
+
+        if (isYear){
+            commandInput = {   
+                ...commandInput,       
+                TableName: process.env.TABLE_NAME,
+                KeyConditionExpression: "MovieId = :m and begins_with(ReviewDate, :year)",
+                ExpressionAttributeValues: {
+                    ":m": movieId,
+                    ":year": inputParam
+                },
+            }
+        }else{
+             commandInput = {   
+                ...commandInput,       
                 TableName: process.env.TABLE_NAME,
                 KeyConditionExpression: "MovieId = :m",
                 FilterExpression: "ReviewerName = :rN",
                 ExpressionAttributeValues: {
                     ":m": movieId,
-                    ":rN": reviewerName
+                    ":rN": inputParam
                 },
-            })
-        );
+            }
+        }
 
-        if(!commandOutput.Items || commandOutput.Items.length === 0){       // Query command always returns data even if nothing is found
-            return {                                                        // https://stackoverflow.com/questions/44337856/check-if-specific-object-is-empty-in-typescript
+        const commandOutput = await ddbDocClient.send(
+            new QueryCommand(commandInput)
+        )
+
+        if(!commandOutput.Items || commandOutput.Items.length === 0){
+            return {
                 statusCode: 404,
                 headers: {
                     "content-type": "application/json",
                 },
-                body: JSON.stringify({ Message: "No reviews found. Verify movie Id and reviewer name and try again." }),
+                body: JSON.stringify({ Message: "No reviews found. Verify movie Id and reviewer name/review year and try again." }),
             };
         }
 
