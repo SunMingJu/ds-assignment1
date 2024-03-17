@@ -9,15 +9,14 @@ This repository contains an implementation of a serverless REST API for the AWS 
 ### API endpoints.
 
 __App API:__
-+ POST /movies/reviews - Add a review to a movie. **[Requires Authentication]**
-+ GET /movies/reviews/{reviewerName} - Get all reviews written by a specific reviewer (across all movies)
-+ GET /movies/{movieId}/reviews - Get all reviews for a specific movie.
-+ GET /movies/{movieId}/reviews?minRating=n - Get all reviews for a specific movie with a rating greater than or equal to the specified minimum rating.
-+ GET /movies/{movieId}/reviews/{reviewerName} - Get a review for a specific movie written by an input reviwerName.
-+ GET /movies/{movieId}/reviews/{year} - Get all reviews for a specific movie written during an input year.
-    + This endpoint shares a lambda call with the above {reviewerName} endpoint, the input of which is determined through regex.
-+ PUT /movies/{movieId}/reviews/{reviewerName} - Update a specific review's content. **[Requires Authentication]**
-+ GET /movies/{movieId}/reviews/{reviewerName}/translate?language=xx - Translate a review's content into a specified langauge
++ POST /movies/reviews - add a movie review. **[Requires Authentication]**
++ GET /movies/{movieId}/reviews - Get all the reviews for the specified movie.
++ GET /movies/{movieId}/reviews?minRating=n - Get the reviews for the specified movie with a rating greater than the minRating.
++ GET /movies/{movieId}/reviews/{reviewerName} - Get the review written by the named reviewer for the specified movie.
++ PUT /movies/{movieId}/reviews/{reviewerName} - Update the text of a review. **[Requires Authentication]**
++ GET /movies/{movieId}/reviews/{year} - Get the reviews written in a specific year for a specific movie.
++ GET /reviews/{reviewerName} - Get all the reviews written by a specific reviewer.
++ GET /reviews/{reviewerName}/{movieId}/translation?language=code - Get a translated version of a movie review using the movie ID and reviewer name as the identifier.
 
 ![](./images/001.png)
 
